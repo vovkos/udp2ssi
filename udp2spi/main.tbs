@@ -1,0 +1,88 @@
+'=============================================
+'SSI. object -- compare waveforms -- SPI mode
+'=============================================
+
+
+'MODE0: Clock defaults to LOW, DOUT changes on falling CLK edge, DIN latches on rising CLK edge
+'         __    __
+'CLK  ___|  |__|  |__ 
+'     _______ _____ ___
+'DOUT _b0____|_____|___
+'
+'DIN      |     |      (latch moments)
+
+
+
+'MODE1: Clock defaults to LOW, DOUT changes on rising CLK edge, DIN latches on falling CLK edge
+'         __    __
+'CLK  ___|  |__|  |__ 
+'     ____ _____ ___
+'DOUT _x__|__b0_|__b1
+'
+'DIN         |     |   (latch moments)
+
+
+
+'MODE2: Clock defaults to HIGH, DOUT changes on rising CLK edge, DIN latches on falling CLK edge
+'     ___    __    __
+'CLK     |__|  |__| 
+'     _______ _____ ___
+'DOUT _b0____|_____|___
+'
+'DIN      |     |      (latch moments)
+
+
+
+'MODE3: Clock defaults to HIGH, DOUT changes on falling CLK edge, DIN latches on rising CLK edge
+'     ___    __    __
+'CLK     |__|  |__| 
+'     ____ _____ ___
+'DOUT _x__|__b0_|__b1
+'
+'DIN         |     |    (latch moments)
+
+
+'===============================================================
+sub on_sys_init()
+	io.num=0 'clock
+	io.enabled=YES
+			
+	io.num=2 'data out
+	io.enabled=YES
+	
+	io.num=6 'cs
+	io.enabled=YES
+	
+	ssi.channel=0			'<=============================== set the right channel
+	
+	ssi.clkmap=0
+	ssi.domap=2
+	ssi.dimap=4
+
+	ssi.mode=PL_SSI_MODE_0	'<=============================== try all modes	
+	ssi.baudrate=1
+	ssi.direction=PL_SSI_DIRECTION_LEFT
+	ssi.zmode=PL_SSI_ZMODE_ALWAYS_ENABLED
+	ssi.enabled=YES
+
+	net.ip="192.168.1.251"
+	sock.num=0
+	sock.rxbuffrq(2)
+	sys.buffalloc
+	sock.protocol=PL_SOCK_PROTOCOL_UDP
+	sock.localportlist="1001"
+	sock.inconmode=PL_SOCK_INCONMODE_ANY_IP_ANY_PORT
+	sock.reconmode=PL_SOCK_RECONMODE_1
+
+end sub
+
+sub on_sock_data_arrival()
+	dim s as string = sock.getdata(255)
+	sys.debugprint (s + "\n")
+
+	ssi.enabled=YES
+	io.lineset(6,LOW)
+	ssi.str(s,PL_SSI_ACK_OFF)
+	io.lineset(6,HIGH)
+	ssi.enabled=NO
+end sub
